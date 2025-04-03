@@ -18,7 +18,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.atividadefinal.database.AppDatabase
 import com.example.atividadefinal.database.User
 import kotlinx.coroutines.launch
-// ViewModel para lidar com o Banco de Dados
 import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
@@ -57,7 +56,7 @@ fun RegisterScreen(navController: NavController, viewModel: RegisterViewModel = 
         OutlinedTextField(value = email,
             onValueChange = {
                 email = it
-                erroEmail = !isValidEmail(email) // Valida o e-mail
+                erroEmail = !isValidEmail(email)
                 },
 
             label = { Text("E-mail") })

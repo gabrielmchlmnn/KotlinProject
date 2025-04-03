@@ -1,6 +1,5 @@
 package com.example.atividadefinal.screens
 
-// ViewModel para login
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

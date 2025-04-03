@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt") // Adicione esta linha para ativar o KAPT
+    id("kotlin-kapt")
 }
 
 android {
@@ -68,10 +68,9 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-    val room_version = "2.6.1" // Verifique a versão mais recente
-
+    val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
-    implementation("androidx.room:room-ktx:$room_version") // Extensão para coroutines
-    kapt("androidx.room:room-compiler:$room_version") // Para as anotações do Room
+    implementation("androidx.room:room-ktx:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
 
 }

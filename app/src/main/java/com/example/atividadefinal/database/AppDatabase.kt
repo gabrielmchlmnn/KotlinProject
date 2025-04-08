@@ -1,13 +1,15 @@
 package com.example.atividadefinal.database
 
+
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [User::class], version = 1, exportSchema = false)
+@Database(entities = [User::class, Trip::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
+    abstract fun tripDao(): TripDao
 
     companion object {
         @Volatile
@@ -18,7 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "travelapp_database"
+                    "atividade_final_db"
                 ).build()
                 INSTANCE = instance
                 instance

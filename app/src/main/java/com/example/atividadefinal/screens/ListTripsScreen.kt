@@ -3,11 +3,14 @@ package com.example.atividadefinal.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.atividadefinal.database.AppDatabase
 import com.example.atividadefinal.database.Trip
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun ListTripsScreen() {
+fun ListTripsScreen(navController : NavController) {
     val context = LocalContext.current
     val tripDao = AppDatabase.getDatabase(context).tripDao()
 
@@ -31,7 +34,7 @@ fun ListTripsScreen() {
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
-            text = "Lista de Viagens",
+            text = "Lista de viagens",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -57,14 +60,25 @@ fun ListTripsScreen() {
                         horizontalArrangement = Arrangement.End
                     ) {
                         Button(
-                            onClick = { tripToDelete = trip },
-                            colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
+                            onClick = {
+                                navController.navigate("editTrip/${trip.id}")
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)), // Azul
+                            modifier = Modifier.padding(end = 8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Excluir",
-                                modifier = Modifier.size(18.dp)
-                            )
+                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar")
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Editar")
+                        }
+
+                        Button(
+                            onClick = {
+                                tripToDelete = trip
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)) // Vermelho
+                        ) {
+                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Excluir")
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text("Excluir")
                         }
                     }

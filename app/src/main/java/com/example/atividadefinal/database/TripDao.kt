@@ -12,4 +12,10 @@ interface TripDao {
 
     @Delete
     suspend fun deleteTrip(trip: Trip)
+
+    @Query("SELECT * FROM trips WHERE id = :tripId LIMIT 1")
+    suspend fun getTripById(tripId: Int): Trip?
+
+    @Update
+    suspend fun updateTrip(trip: Trip)
 }

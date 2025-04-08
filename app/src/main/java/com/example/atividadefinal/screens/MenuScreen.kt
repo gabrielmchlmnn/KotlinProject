@@ -55,9 +55,13 @@ fun MenuScreen() {
             startDestination = BottomNavItem.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(BottomNavItem.Home.route) { ListTripsScreen()}
+            composable(BottomNavItem.Home.route) { ListTripsScreen(navController)}
             composable(BottomNavItem.NewTrip.route) { NewTripScreen(navController) }
             composable(BottomNavItem.About.route) { AboutScreen() }
+            composable("editTrip/{tripId}") { backStackEntry ->
+                val tripId = backStackEntry.arguments?.getString("tripId")?.toInt() ?: 0
+                EditTripScreen(navController = navController, tripId = tripId)
+            }
         }
     }
 }

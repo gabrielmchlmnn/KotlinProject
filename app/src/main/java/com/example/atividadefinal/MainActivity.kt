@@ -19,6 +19,10 @@ class MainActivity : ComponentActivity() {
                 composable("login") { LoginScreen(navController) }
                 composable("register") { RegisterScreen(navController) }
                 composable("menu") { MenuScreen() }
+                composable("editTrip/{tripId}") { backStackEntry ->
+                    val tripId = backStackEntry.arguments?.getString("tripId")?.toInt() ?: 0
+                    EditTripScreen(navController = navController, tripId = tripId)
+                }
             }
         }
     }

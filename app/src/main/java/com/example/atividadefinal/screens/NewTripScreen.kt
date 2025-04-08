@@ -31,7 +31,7 @@ fun NewTripScreen(navController: NavController) {
     var type by remember { mutableStateOf("Lazer") }
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
-    var budget by remember { mutableStateOf("") }
+    var budget by remember { mutableStateOf("0") }
 
     val context = LocalContext.current
     val tripDao = AppDatabase.getDatabase(context).tripDao()
@@ -44,7 +44,7 @@ fun NewTripScreen(navController: NavController) {
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Nova Viagem", style = MaterialTheme.typography.headlineSmall)
+        Text("Nova viagem", style = MaterialTheme.typography.headlineSmall)
 
         OutlinedTextField(
             value = destination,
@@ -179,11 +179,29 @@ fun DatePickerField(label: String, date: String, dateFormatter: SimpleDateFormat
 
 @Composable
 fun CurrencyTextField(value: String, onValueChange: (String) -> Unit) {
+    val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("pt", "BR")) }
+
+    // Controla o valor interno de centavos como string de números
+    var internalValue by remember { mutableStateOf(value.ifEmpty { "0" }) }
+
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
+        value = currencyFormatter.format(internalValue.toLong() / 100.0),
+        onValueChange = { newText ->
+            // Extrai apenas números
+            val digits = newText.replace(Regex("[^\\d]"), "")
+
+            // Verifica se o campo ficou vazio
+            internalValue = if (digits.isEmpty()) {
+                "0"
+            } else {
+                digits
+            }
+
+            onValueChange(internalValue)
+        },
         label = { Text("Orçamento") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth()
+        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true
     )
 }

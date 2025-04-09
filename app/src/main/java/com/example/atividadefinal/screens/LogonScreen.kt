@@ -111,7 +111,6 @@ class RegisterViewModel : ViewModel() {
         viewModelScope.launch {
             val db = AppDatabase.getDatabase(context).userDao()
 
-            // Verifica se já existe um usuário com o mesmo nome de usuário ou e-mail
             val userByUsername = db.getByUsername(user.username)
             val userByEmail = db.getByEmail(user.email)
 

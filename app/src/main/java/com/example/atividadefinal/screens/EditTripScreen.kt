@@ -3,11 +3,14 @@ package com.example.atividadefinal.screens
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
@@ -24,7 +27,6 @@ import java.util.Calendar
 import java.util.Currency
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditTripScreen(navController: NavController, tripId: Int) {
     val context = LocalContext.current
@@ -36,7 +38,9 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
     var type by remember { mutableStateOf("Lazer") }
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
-    var budget by remember { mutableStateOf("") }
+    var budget by remember { mutableStateOf("0") }
+
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     LaunchedEffect(tripId) {
         trip = tripDao.getTripById(tripId)
@@ -51,13 +55,17 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
 
     Column(
         modifier = Modifier
-            .padding(16.dp)
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Text("Editar Viagem", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            text = "Editar Viagem",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
 
-        val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         OutlinedTextField(
             value = destination,
             onValueChange = { destination = it },
@@ -67,43 +75,68 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
 
         DropdownMenuTripType(selected = type, onTypeChange = { type = it })
 
-        DatePickerField(label = "Data de Início", date = startDate, dateFormatter = dateFormatter) { selectedDate ->
-            startDate = selectedDate
+        DatePickerField(label = "Data de Início", date = startDate, dateFormatter = dateFormatter) {
+            startDate = it
         }
 
-        DatePickerField(label = "Data Final", date = endDate, dateFormatter = dateFormatter) { selectedDate ->
-            endDate = selectedDate
+        DatePickerField(label = "Data Final", date = endDate, dateFormatter = dateFormatter) {
+            endDate = it
         }
 
-        CurrencyTextField(value = budget, onValueChange = { budget = it })
+        OutlinedTextField(
+            value = budget,
+            onValueChange = { input ->
+                budget = formatCurrency(input)
+            },
+            label = { Text("Orçamento") },
+            placeholder = { Text("Ex: R$ 1.000,00") },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
 
-        Button(
-            onClick = {
-                if (destination.isNotBlank() && startDate.isNotBlank() && endDate.isNotBlank() && budget.isNotBlank()) {
-                    trip?.let { existingTrip ->
-                        val updatedTrip = existingTrip.copy(
-                            destino = destination,
-                            tipo = type,
-                            dataInicio = startDate,
-                            dataFinal = endDate,
-                            orcamento = budget.toDoubleOrNull() ?: 0.0
-                        )
+        Spacer(modifier = Modifier.height(24.dp))
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            OutlinedButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Cancelar")
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                onClick = {
+                    val updatedTrip = trip?.copy(
+                        destino = destination,
+                        tipo = type,
+                        dataInicio = startDate,
+                        dataFinal = endDate,
+                        orcamento = budget.toDoubleOrNull() ?: 0.0
+                    )
+
+                    if (updatedTrip != null) {
                         CoroutineScope(Dispatchers.IO).launch {
                             tripDao.updateTrip(updatedTrip)
                             launch(Dispatchers.Main) {
-                                Toast.makeText(context, "Viagem atualizada com sucesso!", Toast.LENGTH_SHORT).show()
-                                navController.popBackStack() // Volta para a tela anterior
+                                Toast.makeText(context, "Viagem atualizada!", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
                             }
                         }
+                    } else {
+                        Toast.makeText(context, "Erro ao atualizar viagem.", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    Toast.makeText(context, "Preencha todos os campos!", Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Salvar Alterações")
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Salvar")
+            }
         }
     }
 }

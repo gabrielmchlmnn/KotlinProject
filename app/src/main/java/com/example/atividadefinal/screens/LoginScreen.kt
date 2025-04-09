@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -28,39 +29,70 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Bem-vindo ao TravelApp", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = "Bem-vindo ao TravelApp ✈️",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Usuário") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Nome de usuário") })
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Senha") }, visualTransformation = PasswordVisualTransformation())
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Senha") },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Button(onClick = {
-            viewModel.loginUser(context, username, password) { success ->
-                if (success) {
-                    navController.navigate("menu")
+        Button(
+            onClick = {
+                if (username.isNotEmpty() && password.isNotEmpty()) {
+                    viewModel.loginUser(context, username, password) { success ->
+                        if (success) {
+                            navController.navigate("menu")
+                        } else {
+                            Toast.makeText(context, "Usuário ou senha incorretos!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 } else {
-                    Toast.makeText(context, "Usuário ou senha incorretos!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Por favor, preencha todos os campos.", Toast.LENGTH_SHORT).show()
                 }
-            }
-        }) {
-            Text("Login")
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Text("Entrar")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { navController.navigate("register") }) {
-            Text("Registrar um novo usuário")
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = { navController.navigate("Register") }) {
+            Text("Criar uma conta", color = MaterialTheme.colorScheme.primary)
         }
     }
 }
-
 
 class LoginViewModel : ViewModel() {
     fun loginUser(context: Context, username: String, password: String, onResult: (Boolean) -> Unit) {

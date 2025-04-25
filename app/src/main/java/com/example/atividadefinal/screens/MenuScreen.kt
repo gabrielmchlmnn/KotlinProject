@@ -1,4 +1,5 @@
 package com.example.atividadefinal.screens
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -36,13 +37,7 @@ fun MenuScreen() {
                         selected = currentRoute == item.route,
                         onClick = {
                             if (currentRoute != item.route) {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                navController.navigate(item.route)
                             }
                         }
                     )

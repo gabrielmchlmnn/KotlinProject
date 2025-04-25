@@ -113,7 +113,7 @@ fun NewTripScreen(navController: NavController) {
                         )
                         CoroutineScope(Dispatchers.Main).launch {
                             Toast.makeText(context, "Viagem salva com sucesso!", Toast.LENGTH_SHORT).show()
-                            navController.popBackStack()
+                            navController.navigate("menu")
                         }
                     }
                 }

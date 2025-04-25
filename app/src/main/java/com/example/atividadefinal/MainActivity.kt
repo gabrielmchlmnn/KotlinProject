@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.atividadefinal.screens.AppNavigation
 import com.example.atividadefinal.screens.*
 
 class MainActivity : ComponentActivity() {
@@ -19,10 +18,6 @@ class MainActivity : ComponentActivity() {
                 composable("login") { LoginScreen(navController) }
                 composable("register") { RegisterScreen(navController) }
                 composable("menu") { MenuScreen() }
-                composable("editTrip/{tripId}") { backStackEntry ->
-                    val tripId = backStackEntry.arguments?.getString("tripId")?.toInt() ?: 0
-                    EditTripScreen(navController = navController, tripId = tripId)
-                }
             }
         }
     }

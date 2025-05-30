@@ -1,5 +1,8 @@
 package com.example.atividadefinal.screens
 
+import android.annotation.SuppressLint
+import android.app.Notification.MessagingStyle.Message
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -22,8 +25,18 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.example.atividadefinal.api.generateSuggestionFromGemini
+import kotlinx.coroutines.withContext
+
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun ListTripsScreen(navController: NavController) {
+    var isDialogOpen by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var aiSuggestion by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     val tripDao = AppDatabase.getDatabase(context).tripDao()
 
@@ -32,6 +45,26 @@ fun ListTripsScreen(navController: NavController) {
 
     LaunchedEffect(Unit) {
         trips = tripDao.getAllTrips().sortedByDescending { it.id }
+    }
+
+    fun fetchAiSuggestion(cidade: String, dataInicio: String, dataFinal: String) {
+        isLoading = true
+        aiSuggestion = ""
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val suggestion = generateSuggestionFromGemini(cidade, dataFinal, dataInicio)
+
+                withContext(Dispatchers.Main) {
+                    aiSuggestion = suggestion
+                    isLoading = false
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    aiSuggestion = "Erro ao gerar sugestão: ${e.message}"
+                    isLoading = false
+                }
+            }
+        }
     }
 
     Column(
@@ -125,6 +158,18 @@ fun ListTripsScreen(navController: NavController) {
                                             tint = MaterialTheme.colorScheme.error
                                         )
                                     }
+
+                                    Button(
+                                        onClick = {
+                                            fetchAiSuggestion(trip.destino, trip.dataInicio, trip.dataFinal)
+                                            isDialogOpen = true
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    ) {
+                                        Text("Ver sugestões")
+                                    }
                                 }
                             }
                         }
@@ -145,6 +190,44 @@ fun ListTripsScreen(navController: NavController) {
                     contentColor = Color.White  // Ajustei a cor do ícone para branco
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Nova viagem")
+                }
+
+
+
+                if (isDialogOpen) {
+                    AlertDialog(
+                        onDismissRequest = { isDialogOpen = false },
+                        confirmButton = {
+                            TextButton(onClick = { isDialogOpen = false }) {
+                                Text("Fechar")
+                            }
+                        },
+                        title = {
+                            Text("Sugestões de Destinos")
+                        },
+                        text = {
+                            if (isLoading) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    CircularProgressIndicator()
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text("Gerando sugestões...")
+                                }
+                            } else {
+                                // Conteúdo rolável para sugestões longas
+                                Box(
+                                    modifier = Modifier
+                                        .heightIn(max = 200.dp) // Limita a altura do conteúdo para habilitar scroll
+                                        .verticalScroll(rememberScrollState())
+                                ) {
+                                    Text(aiSuggestion)
+                                }
+                            }
+                        }
+                    )
                 }
             }
 
@@ -176,7 +259,11 @@ fun ListTripsScreen(navController: NavController) {
             )
         }
     }
+
 }
+
+
+
 fun formatDate(dateString: String): String {
     return try {
         val parser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -187,3 +274,4 @@ fun formatDate(dateString: String): String {
         dateString
     }
 }
+

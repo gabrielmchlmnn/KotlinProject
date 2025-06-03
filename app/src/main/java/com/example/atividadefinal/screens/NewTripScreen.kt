@@ -89,7 +89,7 @@ fun NewTripScreen(navController: NavController) {
         }
 
 
-        CurrencyInputField(budget)
+        CurrencyInputField(value = budget,onValueChange = { budget = it })
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -190,55 +190,23 @@ fun DatePickerField(label: String, date: String, dateFormatter: SimpleDateFormat
 }
 
 @Composable
-fun CurrencyInputField(value: String) {
-    var rawValue by remember { mutableStateOf(value) }
-    var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
-
+fun CurrencyInputField(value: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
-        value = formatCurrency(rawValue),
+        value = formatCurrency(value),
         onValueChange = { input ->
             val digits = input.replace(Regex("[^\\d]"), "")
-            rawValue = digits
+            onValueChange(digits)
         },
         label = { Text("Orçamento") },
         placeholder = { Text("Ex: R$ 1.000,00") },
         keyboardOptions = KeyboardOptions.Default.copy(
             keyboardType = KeyboardType.Number
         ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.type == KeyEventType.KeyDown) {
-                    when (keyEvent.key) {
-                        Key.DirectionRight -> {
-                            val currentPos = textFieldValue.selection.end
-                            if (currentPos < textFieldValue.text.length) {
-                                textFieldValue = textFieldValue.copy(
-                                    selection = TextRange(currentPos + 1)
-                                )
-                            }
-                            true
-                        }
-                        Key.DirectionLeft -> {
-                            val currentPos = textFieldValue.selection.start
-                            if (currentPos > 0) {
-                                textFieldValue = textFieldValue.copy(
-                                    selection = TextRange(currentPos - 1)
-                                )
-                            }
-                            true
-                        }
-                        else -> false
-                    }
-                } else {
-                    false
-                }
-            }
-
+        modifier = Modifier.fillMaxWidth()
     )
 }
 
-// Formata corretamente o valor bruto para moeda brasileira
+// Formata corretamente o valor bruto (em centavos) para moeda brasileira
 fun formatCurrency(digits: String): String {
     if (digits.isEmpty()) return ""
     val parsed = digits.toBigDecimalOrNull() ?: return ""

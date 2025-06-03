@@ -38,7 +38,7 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
     var type by remember { mutableStateOf("Lazer") }
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
-    var budget by remember { mutableStateOf("0") }
+    var budget by remember { mutableStateOf("0") } // valor em centavos como string
 
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
@@ -49,7 +49,7 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
             type = it.tipo
             startDate = it.dataInicio
             endDate = it.dataFinal
-            budget = it.orcamento.toString()
+            budget = (it.orcamento * 100).toInt().toString() // convertendo de volta para string em centavos
         }
     }
 
@@ -83,18 +83,7 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
             endDate = it
         }
 
-        OutlinedTextField(
-            value = budget,
-            onValueChange = { input ->
-                budget = formatCurrency(input)
-            },
-            label = { Text("Orçamento") },
-            placeholder = { Text("Ex: R$ 1.000,00") },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
+        CurrencyInputField(value = budget, onValueChange = { budget = it })
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -113,12 +102,14 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
 
             Button(
                 onClick = {
+                    val cleanBudget = budget.toDoubleOrNull()?.div(100) ?: 0.0
+
                     val updatedTrip = trip?.copy(
                         destino = destination,
                         tipo = type,
                         dataInicio = startDate,
                         dataFinal = endDate,
-                        orcamento = budget.toDoubleOrNull() ?: 0.0
+                        orcamento = cleanBudget
                     )
 
                     if (updatedTrip != null) {
@@ -140,6 +131,8 @@ fun EditTripScreen(navController: NavController, tripId: Int) {
         }
     }
 }
+
+
 @Composable
 fun DatePickerField(label: String, date: String, dateFormatter:String, onDateSelected: (String) -> Unit) {
     val context = LocalContext.current

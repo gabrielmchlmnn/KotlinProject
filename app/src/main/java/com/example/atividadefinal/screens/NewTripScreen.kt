@@ -1,13 +1,13 @@
 package com.example.atividadefinal.screens
 
 import android.app.DatePickerDialog
+import android.content.Context
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -24,28 +24,25 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.sp
+import com.example.atividadefinal.components.MyDatePicker
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NewTripScreen(navController: NavController) {
     var destination by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("Lazer") }
-    var startDate by remember { mutableStateOf("") }
-    var endDate by remember { mutableStateOf("") }
+    var startDate by remember { mutableStateOf(LocalDate.MIN) }
+    var endDate by remember { mutableStateOf(LocalDate.MIN) }
     var budget by remember { mutableStateOf("0") }
 
     val context = LocalContext.current
     val tripDao = AppDatabase.getDatabase(context).tripDao()
-    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -72,30 +69,29 @@ fun NewTripScreen(navController: NavController) {
             onTypeChange = { type = it }
         )
 
-        DatePickerField(
-            label = "Data de Início",
-            date = startDate,
-            dateFormatter = dateFormatter
-        ) { selectedDate ->
-            startDate = selectedDate
-        }
 
-        DatePickerField(
-            label = "Data Final",
-            date = endDate,
-            dateFormatter = dateFormatter
-        ) { selectedDate ->
-            endDate = selectedDate
-        }
+        MyDatePicker(
+            label = "Data de início",
+            value = if (startDate != LocalDate.MIN) startDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) else "",
+            onValueChange = { selectedDate: LocalDate ->
+                startDate = selectedDate
+            }
+        )
 
-
+        MyDatePicker(
+            label = "Data final",
+            value = if (endDate != LocalDate.MIN) endDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) else "",
+            onValueChange = { selectedDate: LocalDate ->
+                endDate = selectedDate
+            }
+        )
         CurrencyInputField(value = budget,onValueChange = { budget = it })
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
-                if (destination.isBlank() || startDate.isBlank() || endDate.isBlank()) {
+                if (destination.isBlank() || startDate == LocalDate.MIN || endDate == LocalDate.MIN) {
                     Toast.makeText(context, "Preencha todos os campos obrigatórios", Toast.LENGTH_SHORT).show()
                 } else {
                     val budgetClean = budget.replace(Regex("[R$\\s.]"), "").replace(",", ".")
@@ -106,9 +102,10 @@ fun NewTripScreen(navController: NavController) {
                             Trip(
                                 destino = destination,
                                 tipo = type,
-                                dataInicio = startDate,
-                                dataFinal = endDate,
-                                orcamento = budgetValue
+                                dataInicio = startDate.format(formatter),
+                                dataFinal = endDate.format(formatter),
+                                orcamento = budgetValue,
+                                sugestao  = ""
                             )
                         )
                         CoroutineScope(Dispatchers.Main).launch {
@@ -163,20 +160,35 @@ fun DropdownMenuTripType(selected: String, onTypeChange: (String) -> Unit) {
 }
 
 @Composable
-fun DatePickerField(label: String, date: String, dateFormatter: SimpleDateFormat, onDateSelected: (String) -> Unit) {
-    val context = LocalContext.current
-    val calendar = Calendar.getInstance()
+fun DatePickerField(
+    label: String,
+    date: String,
+    dateFormatter: SimpleDateFormat,
+    context: Context,
+    onDateSelected: (String) -> Unit
+) {
+    val calendar = remember { Calendar.getInstance() }
+    val today = remember { Calendar.getInstance() }
 
-    val datePickerDialog = DatePickerDialog(
-        context,
-        { _, year, month, dayOfMonth ->
-            calendar.set(year, month, dayOfMonth)
-            onDateSelected(dateFormatter.format(calendar.time))
-        },
-        calendar.get(Calendar.YEAR),
-        calendar.get(Calendar.MONTH),
-        calendar.get(Calendar.DAY_OF_MONTH)
-    )
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        // Mostra o DatePickerDialog quando necessário
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                calendar.set(year, month, dayOfMonth)
+                onDateSelected(dateFormatter.format(calendar.time))
+                showDialog = false
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).apply {
+            datePicker.minDate = today.timeInMillis // Impede datas passadas
+            show()
+        }
+    }
 
     OutlinedTextField(
         value = date,
@@ -185,9 +197,16 @@ fun DatePickerField(label: String, date: String, dateFormatter: SimpleDateFormat
         label = { Text(label) },
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { datePickerDialog.show() }
+            .onFocusChanged { focusState ->
+                if (focusState.isFocused) {
+                    showDialog = true
+                }
+            }
+            .clickable { showDialog = true }
     )
 }
+
+
 
 @Composable
 fun CurrencyInputField(value: String, onValueChange: (String) -> Unit) {

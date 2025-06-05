@@ -29,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.example.atividadefinal.api.generateSuggestionFromGemini
 import kotlinx.coroutines.withContext
+import java.text.NumberFormat
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
@@ -47,12 +48,17 @@ fun ListTripsScreen(navController: NavController) {
         trips = tripDao.getAllTrips().sortedByDescending { it.id }
     }
 
-    fun fetchAiSuggestion(cidade: String, dataInicio: String, dataFinal: String) {
+    fun fetchAiSuggestion(trip:Trip, cidade: String, dataInicio: String, dataFinal: String, tipo: String) {
         isLoading = true
         aiSuggestion = ""
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val suggestion = generateSuggestionFromGemini(cidade, dataFinal, dataInicio)
+                val suggestion = generateSuggestionFromGemini(cidade, dataFinal, dataInicio, tipo)
+
+                val updatedTrip = trip.copy(sugestao = suggestion)
+                tripDao.updateTrip(updatedTrip)
+
+                trips = tripDao.getAllTrips().sortedByDescending { it.id }
 
                 withContext(Dispatchers.Main) {
                     aiSuggestion = suggestion
@@ -128,8 +134,10 @@ fun ListTripsScreen(navController: NavController) {
                                     "Final: ${formatDate(trip.dataFinal)}",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
+                                val formattedOrcamento = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(trip.orcamento)
+
                                 Text(
-                                    "Orçamento: R$ ${"%.2f".format(trip.orcamento)}",
+                                    "Orçamento: ${formattedOrcamento}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -161,8 +169,13 @@ fun ListTripsScreen(navController: NavController) {
 
                                     Button(
                                         onClick = {
-                                            fetchAiSuggestion(trip.destino, trip.dataInicio, trip.dataFinal)
                                             isDialogOpen = true
+
+                                            if (trip.sugestao == ""){
+                                                fetchAiSuggestion(trip, trip.destino, trip.dataInicio, trip.dataFinal, trip.tipo)
+                                            } else {
+                                                aiSuggestion = trip.sugestao
+                                            }
                                         },
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = MaterialTheme.colorScheme.primary
@@ -220,7 +233,7 @@ fun ListTripsScreen(navController: NavController) {
                                 // Conteúdo rolável para sugestões longas
                                 Box(
                                     modifier = Modifier
-                                        .heightIn(max = 200.dp) // Limita a altura do conteúdo para habilitar scroll
+                                        .heightIn(max = 300.dp) // Limita a altura do conteúdo para habilitar scroll
                                         .verticalScroll(rememberScrollState())
                                 ) {
                                     Text(aiSuggestion)
